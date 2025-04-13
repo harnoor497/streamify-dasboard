@@ -1,7 +1,4 @@
-import { Grid, Paper, Typography, Box, useTheme } from '@mui/material';
-import type { Theme } from '@mui/material/styles';
-import type { SxProps } from '@mui/system';
-import type { GridProps } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 import MetricCard from '../components/MetricCard';
 import UserGrowthChart from '../components/UserGrowthChart';
@@ -38,11 +35,40 @@ const Dashboard = () => {
     ),
   };
 
-  // Transform topSongs data to match the expected format
-  const formattedTopSongs = topSongs.map(song => ({
-    name: song.title,
-    streams: Number(song.streams)
-  }));
+  // Transform topSongs data
+  const formattedTopSongs = topSongs
+    .filter((song): song is typeof song & { title: string } => Boolean(song.title))
+    .map(song => ({
+      name: song.title,
+      streams: Number(song.streams)
+    }));
+
+  const metricCards = [
+    {
+      title: 'Total Users',
+      value: currentMetrics.totalUsers,
+      icon: '👥',
+      trend: trends.totalUsers,
+    },
+    {
+      title: 'Active Users',
+      value: currentMetrics.activeUsers,
+      icon: '🎵',
+      trend: trends.activeUsers,
+    },
+    {
+      title: 'Revenue',
+      value: `$${currentMetrics.revenue.toLocaleString()}`,
+      icon: '💰',
+      trend: trends.revenue,
+    },
+    {
+      title: 'Total Streams',
+      value: currentMetrics.totalStreams,
+      icon: '🎤',
+      trend: trends.totalStreams,
+    }
+  ];
 
   return (
     <motion.div
@@ -50,13 +76,7 @@ const Dashboard = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Box 
-        sx={{ 
-          p: { xs: 2, sm: 3, md: 4 },
-          minHeight: '100vh',
-          background: theme.palette.background.default,
-        }}
-      >
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, minHeight: '100vh', background: theme.palette.background.default }}>
         <Box sx={{ 
           display: 'flex',
           alignItems: 'center',
@@ -75,391 +95,59 @@ const Dashboard = () => {
         </Box>
         
         {/* Metric Cards */}
-        <Grid 
-          container 
-          spacing={3} 
-          sx={{ 
-            mb: 4,
-            display: 'flex',
-            flexWrap: 'nowrap',
-            overflowX: 'auto',
-            pb: 1,
-            '&::-webkit-scrollbar': {
-              height: 6
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: 'rgba(0,0,0,0.05)',
-              borderRadius: 3
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(107, 70, 193, 0.2)',
-              borderRadius: 3,
-              '&:hover': {
-                backgroundColor: 'rgba(107, 70, 193, 0.3)'
-              }
-            }
-          }}
-        >
-          <Grid item xs={3} sx={{ minWidth: 280 }}>
-            <Paper
-              sx={{
-                p: 3,
-                height: '100%',
-                background: '#6B46C1',
-                color: 'white',
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              }}
-            >
-              <MetricCard
-                title="Total Users"
-                value={currentMetrics.totalUsers}
-                icon="👥"
-                trend={trends.totalUsers}
-              />
-            </Paper>
-          </Grid>
-          <Grid item xs={3} sx={{ minWidth: 280 }}>
-            <Paper
-              sx={{
-                p: 3,
-                height: '100%',
-                background: '#6B46C1',
-                color: 'white',
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              }}
-            >
-              <MetricCard
-                title="Active Users"
-                value={currentMetrics.activeUsers}
-                icon="🎵"
-                trend={trends.activeUsers}
-              />
-            </Paper>
-          </Grid>
-          <Grid item component="div" xs={3} sx={{ minWidth: 280 }}>
-            <Paper
-              sx={{
-                p: 3,
-                height: '100%',
-                background: '#6B46C1',
-                color: 'white',
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              }}
-            >
-              <MetricCard
-                title="Total Streams"
-                value={currentMetrics.totalStreams}
-                icon="▶️"
-                trend={trends.totalStreams}
-              />
-            </Paper>
-          </Grid>
-          <Grid item component="div" xs={3} sx={{ minWidth: 280 }}>
-            <Paper
-              sx={{
-                p: 3,
-                height: '100%',
-                background: '#6B46C1',
-                color: 'white',
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              }}
-            >
-              <MetricCard
-                title="Revenue"
-                value={`$${currentMetrics.revenue.toLocaleString()}`}
-                icon="💰"
-                trend={trends.revenue}
-              />
-            </Paper>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2, mb: 4 }}>
+          {metricCards.map((card, index) => (
+            <Box key={index} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 3' } }}>
+              <Paper 
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  border: '2px solid #6B46C1',
+                  background: 'white',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 16px rgba(107, 70, 193, 0.2)'
+                  }
+                }}
+              >
+                <MetricCard {...card} />
+              </Paper>
+            </Box>
+          ))}
+        </Box>
 
         {/* Charts */}
-        <Grid 
-          container
-          component="div"
-          spacing={3} 
-          sx={{ 
-            mb: 4,
-            mx: 0,
-            width: '100%',
-            height: '500px'
-          }}
-        >
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4, height: '500px' }}>
           {/* User Growth Chart */}
-          <Grid 
-            item 
-            component="div"
-            xs={12} 
-            md={4} 
-            sx={{ px: 2, height: '100%' }}
-          >
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                height: '100%',
-                background: theme.palette.background.paper,
-                borderRadius: 3,
-                border: '1px solid rgba(107, 70, 193, 0.1)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 8px 25px rgba(107, 70, 193, 0.15)',
-                  borderColor: 'rgba(107, 70, 193, 0.25)'
-                }
-              }}
-            >
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: theme.palette.text.primary,
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Box 
-                  sx={{ 
-                    width: 4, 
-                    height: 20, 
-                    backgroundColor: '#6B46C1',
-                    borderRadius: 1,
-                    mr: 1
-                  }} 
-                />
-                User Growth
-              </Typography>
-              <Box sx={{ 
-                flex: 1,
-                width: '100%',
-                height: 'calc(100% - 40px)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                '.recharts-wrapper': {
-                  width: '100% !important',
-                  height: '100% !important',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  left: 'auto',
-                  right: 'auto',
-                  bottom: 'auto',
-                  top: 'auto',
-                  '.recharts-surface': {
-                    overflow: 'visible',
-                    width: '100%',
-                    height: '100%'
-                  }
-                }
-              }}>
-                <UserGrowthChart data={monthlyMetrics} />
-              </Box>
+          <Box sx={{ flex: '1 1 calc(33.333% - 16px)', minWidth: 300, height: '100%' }}>
+            <Paper elevation={0} sx={{ height: '100%', p: 3 }}>
+              <UserGrowthChart data={monthlyMetrics} />
             </Paper>
-          </Grid>
+          </Box>
 
           {/* Revenue Distribution Chart */}
-          <Grid 
-            item 
-            component="div"
-            xs={12} 
-            md={4} 
-            sx={{ px: 2, height: '100%' }}
-          >
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                height: '100%',
-                background: theme.palette.background.paper,
-                borderRadius: 3,
-                border: '1px solid rgba(56, 178, 172, 0.1)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 8px 25px rgba(56, 178, 172, 0.15)',
-                  borderColor: 'rgba(56, 178, 172, 0.25)'
-                }
-              }}
-            >
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: theme.palette.text.primary,
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Box 
-                  sx={{ 
-                    width: 4, 
-                    height: 20, 
-                    backgroundColor: '#38B2AC',
-                    borderRadius: 1,
-                    mr: 1
-                  }} 
-                />
-                Revenue Distribution
-              </Typography>
-              <Box sx={{ 
-                flex: 1,
-                width: '100%',
-                height: 'calc(100% - 80px)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                '.recharts-wrapper': {
-                  width: '100% !important',
-                  height: '100% !important',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  left: 'auto',
-                  right: 'auto',
-                  bottom: 'auto',
-                  top: 'auto',
-                  '.recharts-surface': {
-                    overflow: 'visible',
-                    width: '100%',
-                    height: '100%'
-                  },
-                  '.recharts-legend-wrapper': {
-                    position: 'absolute !important',
-                    width: '100% !important',
-                    height: 'auto !important',
-                    bottom: '-40px !important',
-                    left: '0 !important',
-                    display: 'flex !important',
-                    justifyContent: 'center !important',
-                    alignItems: 'center !important'
-                  }
-                }
-              }}>
-                <RevenueDistributionChart data={revenueDistribution} />
-              </Box>
+          <Box sx={{ flex: '1 1 calc(33.333% - 16px)', minWidth: 300, height: '100%' }}>
+            <Paper elevation={0} sx={{ height: '100%', p: 3 }}>
+              <RevenueDistributionChart data={revenueDistribution} />
             </Paper>
-          </Grid>
+          </Box>
 
           {/* Top Songs Chart */}
-          <Grid 
-            item 
-            component="div"
-            xs={12} 
-            md={4} 
-            sx={{ px: 2, height: '100%' }}
-          >
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                height: '100%',
-                background: theme.palette.background.paper,
-                borderRadius: 3,
-                border: '1px solid rgba(72, 187, 120, 0.1)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 8px 25px rgba(72, 187, 120, 0.15)',
-                  borderColor: 'rgba(72, 187, 120, 0.25)'
-                }
-              }}
-            >
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: theme.palette.text.primary,
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Box 
-                  sx={{ 
-                    width: 4, 
-                    height: 20, 
-                    backgroundColor: '#48BB78',
-                    borderRadius: 1,
-                    mr: 1
-                  }} 
-                />
-                Top Songs
-              </Typography>
-              <Box sx={{ 
-                flex: 1,
-                width: '100%',
-                height: 'calc(100% - 40px)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                '.recharts-wrapper': {
-                  width: '100% !important',
-                  height: '100% !important',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  left: 'auto',
-                  right: 'auto',
-                  bottom: 'auto',
-                  top: 'auto',
-                  '.recharts-surface': {
-                    overflow: 'visible',
-                    width: '100%',
-                    height: '100%'
-                  }
-                }
-              }}>
-                <TopSongsChart data={formattedTopSongs} />
-              </Box>
+          <Box sx={{ flex: '1 1 calc(33.333% - 16px)', minWidth: 300, height: '100%' }}>
+            <Paper elevation={0} sx={{ height: '100%', p: 3 }}>
+              <TopSongsChart data={formattedTopSongs} />
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Streams Table */}
-        <Grid container component="div" spacing={3}>
-          <Grid item component="div" xs={12}>
-            <Paper 
-              sx={{ 
-                p: 3,
-                background: theme.palette.background.paper,
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: theme.palette.text.primary,
-                  mb: 3
-                }}
-              >
-                Recent Streams
-              </Typography>
-              <StreamsTable />
-            </Paper>
-          </Grid>
-        </Grid>
+        <Box sx={{ p: 3, background: theme.palette.background.paper, borderRadius: 2, boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 3 }}>
+            Recent Streams
+          </Typography>
+          <StreamsTable />
+        </Box>
       </Box>
     </motion.div>
   );

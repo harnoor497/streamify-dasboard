@@ -1,5 +1,100 @@
 import { faker } from '@faker-js/faker';
 
+// Define real artists and their songs
+const artistsData = {
+  'Taylor Swift': {
+    genre: 'Pop',
+    songs: [
+      'Anti-Hero',
+      'Cruel Summer',
+      'Love Story',
+      'Shake It Off',
+      'Blank Space',
+      'Cardigan',
+      'Wildest Dreams'
+    ]
+  },
+  'Diljit Dosanjh': {
+    genre: 'Punjabi',
+    songs: [
+      'Lover',
+      'Proper Patola',
+      'Born To Shine',
+      'G.O.A.T.',
+      'Vibe',
+      'Kinni Kinni'
+    ]
+  },
+  'Ed Sheeran': {
+    genre: 'Pop',
+    songs: [
+      'Shape of You',
+      'Perfect',
+      'Thinking Out Loud',
+      'Bad Habits',
+      'Castle on the Hill'
+    ]
+  },
+  'Drake': {
+    genre: 'Hip Hop',
+    songs: [
+      'God\'s Plan',
+      'Hotline Bling',
+      'One Dance',
+      'In My Feelings',
+      'Started From the Bottom'
+    ]
+  },
+  'BTS': {
+    genre: 'K-Pop',
+    songs: [
+      'Dynamite',
+      'Butter',
+      'Boy With Luv',
+      'DNA',
+      'Fake Love'
+    ]
+  },
+  'The Weeknd': {
+    genre: 'Pop/R&B',
+    songs: [
+      'Blinding Lights',
+      'Starboy',
+      'Save Your Tears',
+      'Die For You',
+      'Call Out My Name'
+    ]
+  }
+};
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  subscriptionType: 'Free' | 'Premium' | 'Family';
+  joinDate: Date;
+  lastActive: Date;
+}
+
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  album: string;
+  duration: number;
+  releaseDate: Date;
+}
+
+interface Stream {
+  id: string;
+  userId: string;
+  songId: string;
+  timestamp: Date;
+  device: 'Mobile' | 'Desktop' | 'Tablet' | 'Smart Speaker';
+  country: string;
+}
+
 // Generate mock user data
 const generateUsers = (count: number) => {
   return Array.from({ length: count }, (_, i) => ({
@@ -13,26 +108,32 @@ const generateUsers = (count: number) => {
 };
 
 // Generate mock song data
-const generateSongs = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `song${i + 1}`,
-    title: faker.music.songName(),
-    artist: faker.person.fullName(),
-    album: faker.music.genre() + ' Album',
-    duration: faker.number.int({ min: 120, max: 360 }),
-    releaseDate: faker.date.past({ years: 5 }),
-  }));
+const generateSongs = () => {
+  return Object.entries(artistsData).flatMap(([artist, data]) => 
+    data.songs.map(songTitle => ({
+      id: faker.string.uuid(),
+      title: songTitle,
+      artist: artist,
+      genre: data.genre,
+      album: songTitle, // We could add real album names if needed
+      duration: faker.number.int({ min: 180, max: 300 }),
+      releaseDate: faker.date.past({ years: 3 }),
+    }))
+  );
 };
 
 // Generate mock stream data
-const generateStreams = (count: number, users: any[], songs: any[]) => {
+const generateStreams = (count: number, users: Array<{ id: string }>, songs: Array<{ id: string }>) => {
   return Array.from({ length: count }, (_, i) => ({
     id: `stream${i + 1}`,
     userId: faker.helpers.arrayElement(users).id,
     songId: faker.helpers.arrayElement(songs).id,
     timestamp: faker.date.recent({ days: 30 }),
     device: faker.helpers.arrayElement(['Mobile', 'Desktop', 'Tablet', 'Smart Speaker']),
-    country: faker.location.country(),
+    country: faker.helpers.arrayElement([
+      'United States', 'India', 'United Kingdom', 'Canada', 
+      'Australia', 'South Korea', 'Japan', 'Germany'
+    ]),
   }));
 };
 
@@ -63,9 +164,9 @@ const generateRevenueDistribution = () => {
   ];
 };
 
-// Generate top songs
-const generateTopSongs = (songs: any[], streams: any[]) => {
-  const songStreams = streams.reduce((acc: any, stream) => {
+// Generate top songs with proper typing
+const generateTopSongs = (songs: Song[], streams: Stream[]) => {
+  const songStreams = streams.reduce<Record<string, number>>((acc, stream) => {
     acc[stream.songId] = (acc[stream.songId] || 0) + 1;
     return acc;
   }, {});
@@ -80,14 +181,14 @@ const generateTopSongs = (songs: any[], streams: any[]) => {
         streams: count,
       };
     })
-    .sort((a, b) => (b.streams as number) - (a.streams as number))
+    .sort((a, b) => b.streams - a.streams)
     .slice(0, 5);
 };
 
 // Generate all mock data
 export const generateMockData = () => {
   const users = generateUsers(1000);
-  const songs = generateSongs(100);
+  const songs = generateSongs();
   const streams = generateStreams(10000, users, songs);
   const monthlyMetrics = generateMonthlyMetrics();
   const revenueDistribution = generateRevenueDistribution();

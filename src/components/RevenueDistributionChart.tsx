@@ -1,193 +1,92 @@
-import { useTheme } from '@mui/material';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
+import React from 'react';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, TooltipItem } from 'chart.js';
 
-interface RevenueDistributionChartProps {
-  data: Array<{
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+interface RevenueDistributionProps {
+  data: {
     name: string;
     value: number;
-  }>;
+  }[];
 }
 
-const RevenueDistributionChart = ({ data }: RevenueDistributionChartProps) => {
-  const theme = useTheme();
-
-  const COLORS = [
-    '#6B46C1', // Primary purple
-    '#38B2AC', // Teal
-    '#48BB78', // Green
-    '#4299E1', // Blue
-  ];
-
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name }: any) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    
-    return (
-      <g>
-        <text
-          x={x}
-          y={y}
-          fill="#FFFFFF"
-          textAnchor={x > cx ? 'start' : 'end'}
-          dominantBaseline="central"
-          style={{ 
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            textShadow: '0 1px 4px rgba(0,0,0,0.2)'
-          }}
-        >
-          {`${(percent * 100).toFixed(0)}%`}
-        </text>
-        <text
-          x={x + (x > cx ? 8 : -8)}
-          y={y + 16}
-          fill={theme.palette.text.secondary}
-          textAnchor={x > cx ? 'start' : 'end'}
-          style={{ 
-            fontSize: '0.75rem',
-            fontWeight: 500
-          }}
-        >
-          ${value.toLocaleString()}
-        </text>
-      </g>
-    );
+const RevenueDistributionChart: React.FC<RevenueDistributionProps> = ({ data }) => {
+  const chartData = {
+    labels: data.map(item => item.name),
+    datasets: [
+      {
+        data: data.map(item => item.value),
+        backgroundColor: [
+          'rgba(79, 70, 229, 0.8)',
+          'rgba(56, 178, 172, 0.8)',
+          'rgba(72, 187, 120, 0.8)',
+          'rgba(109, 40, 217, 0.8)'
+        ],
+        borderColor: [
+          'rgba(79, 70, 229, 1)',
+          'rgba(56, 178, 172, 1)',
+          'rgba(72, 187, 120, 1)',
+          'rgba(109, 40, 217, 1)'
+        ],
+        borderWidth: 2,
+        spacing: 2,
+      },
+    ],
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      return (
-        <div
-          style={{
-            backgroundColor: theme.palette.background.paper,
-            padding: '12px 16px',
-            border: 'none',
-            borderRadius: 8,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          }}
-        >
-          <p style={{ 
-            margin: 0, 
-            color: data.payload.fill,
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{ 
-              width: '10px', 
-              height: '10px', 
-              borderRadius: '50%', 
-              backgroundColor: data.payload.fill,
-              display: 'inline-block'
-            }}/>
-            {data.name}
-          </p>
-          <p style={{ 
-            margin: '8px 0 0', 
-            color: theme.palette.text.primary,
-            fontSize: '1rem',
-            fontWeight: 600
-          }}>
-            ${data.value.toLocaleString()}
-          </p>
-          <p style={{ 
-            margin: '4px 0 0', 
-            color: theme.palette.text.secondary,
-            fontSize: '0.75rem'
-          }}>
-            {((data.value / total) * 100).toFixed(1)}% of total revenue
-          </p>
-        </div>
-      );
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          padding: 20,
+          font: {
+            size: 13,
+            family: "'Inter', sans-serif",
+            weight: 500
+          },
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      },
+      tooltip: {
+        backgroundColor: 'white',
+        titleColor: '#1F2937',
+        bodyColor: '#4F46E5',
+        titleFont: {
+          size: 13,
+          family: "'Inter', sans-serif",
+          weight: 600
+        },
+        bodyFont: {
+          size: 12,
+          family: "'Inter', sans-serif",
+          weight: 500
+        },
+        padding: 12,
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+        callbacks: {
+          label: function(context: TooltipItem<'doughnut'>) {
+            const value = context.parsed;
+            const total = context.dataset.data.reduce((acc: number, data: number) => acc + data, 0);
+            const percentage = Math.round((value * 100) / total);
+            return `${context.label}: ${percentage}%`;
+          }
+        }
+      }
     }
-    return null;
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="45%"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          outerRadius={120}
-          innerRadius={80}
-          paddingAngle={4}
-          dataKey="value"
-          animationBegin={200}
-          animationDuration={1000}
-          animationEasing="ease-out"
-        >
-          {data.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={COLORS[index % COLORS.length]}
-              stroke="none"
-              style={{
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
-                cursor: 'pointer',
-              }}
-            />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          verticalAlign="bottom"
-          align="center"
-          layout="horizontal"
-          wrapperStyle={{
-            position: 'absolute',
-            bottom: '0px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: '16px',
-            padding: '8px'
-          }}
-          formatter={(value, entry: any) => (
-            <span style={{ 
-              color: theme.palette.text.primary,
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              padding: '4px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              borderRadius: '16px',
-              transition: 'all 0.2s ease',
-              ':hover': {
-                backgroundColor: 'rgba(0,0,0,0.04)'
-              }
-            }}>
-              <span style={{ 
-                width: '10px', 
-                height: '10px', 
-                borderRadius: '50%', 
-                backgroundColor: entry.color,
-                display: 'inline-block'
-              }}/>
-              {value}
-            </span>
-          )}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+      <Doughnut data={chartData} options={options} />
+    </div>
   );
 };
 
-export default RevenueDistributionChart; 
+export default RevenueDistributionChart;

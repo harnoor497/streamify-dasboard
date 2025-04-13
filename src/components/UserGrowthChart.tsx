@@ -1,206 +1,138 @@
-import { useTheme } from '@mui/material';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Area,
-  ComposedChart
-} from 'recharts';
+import React from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale, TooltipItem, ChartOptions } from 'chart.js';
+
+ChartJS.register(LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale);
 
 interface UserGrowthChartProps {
-  data: Array<{
+  data: {
     month: string;
     totalUsers: number;
     activeUsers: number;
-  }>;
+    totalStreams: number;
+    revenue: number;
+  }[];
 }
 
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-    name: string;
-    color: string;
-  }>;
-  label?: string;
-}
+const UserGrowthChart: React.FC<UserGrowthChartProps> = ({ data }) => {
+  const chartData = {
+    labels: data.map(item => item.month),
+    datasets: [
+      {
+        label: 'Total Users',
+        data: data.map(item => item.totalUsers),
+        fill: true,
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        borderColor: '#4F46E5',
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#4F46E5',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#4F46E5',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+      },
+      {
+        label: 'Active Users',
+        data: data.map(item => item.activeUsers),
+        fill: true,
+        backgroundColor: 'rgba(56, 178, 172, 0.1)',
+        borderColor: '#38B2AC',
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#38B2AC',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#38B2AC',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+      }
+    ],
+  };
 
-const UserGrowthChart = ({ data }: UserGrowthChartProps) => {
-  const theme = useTheme();
-
-  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          style={{
-            backgroundColor: theme.palette.background.paper,
-            padding: '12px 16px',
-            border: 'none',
-            borderRadius: 8,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          }}
-        >
-          <p style={{ 
-            margin: 0, 
-            color: theme.palette.text.primary,
-            fontWeight: 600,
-            fontSize: '0.875rem'
-          }}>
-            {label}
-          </p>
-          {payload?.map((entry, index) => (
-            <p
-              key={index}
-              style={{ 
-                margin: '4px 0 0', 
-                color: entry.color,
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <span style={{ 
-                width: '8px', 
-                height: '8px', 
-                borderRadius: '50%', 
-                backgroundColor: entry.color,
-                display: 'inline-block'
-              }}/>
-              {entry.name}: {(entry.value / 1000).toFixed(1)}k
-            </p>
-          ))}
-        </div>
-      );
+  const options: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          padding: 20,
+          font: {
+            size: 13,
+            family: "'Inter', sans-serif",
+            weight: 500
+          },
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      },
+      title: {
+        display: false
+      },
+      tooltip: {
+        backgroundColor: 'white',
+        titleColor: '#1F2937',
+        bodyColor: '#4F46E5',
+        titleFont: {
+          size: 13,
+          family: "'Inter', sans-serif",
+          weight: 600
+        },
+        bodyFont: {
+          size: 12,
+          family: "'Inter', sans-serif",
+          weight: 500
+        },
+        padding: 12,
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+        displayColors: true,
+        callbacks: {
+          label: function(context: TooltipItem<"line">) {
+            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} users`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif"
+          },
+          color: '#6B7280'
+        }
+      },
+      y: {
+        grid: {
+          color: 'rgba(0,0,0,0.06)',
+        },
+        ticks: {
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif"
+          },
+          color: '#6B7280',
+          callback: function(tickValue: string | number) {
+            return typeof tickValue === 'number' ? tickValue.toLocaleString() : tickValue;
+          }
+        }
+      }
     }
-    return null;
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart
-        data={data}
-        margin={{
-          top: 20,
-          right: 20,
-          left: 0,
-          bottom: 20
-        }}
-      >
-        <defs>
-          <linearGradient id="totalUsersGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#6B46C1" stopOpacity={0.2}/>
-            <stop offset="95%" stopColor="#6B46C1" stopOpacity={0}/>
-          </linearGradient>
-          <linearGradient id="activeUsersGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#38B2AC" stopOpacity={0.2}/>
-            <stop offset="95%" stopColor="#38B2AC" stopOpacity={0}/>
-          </linearGradient>
-        </defs>
-        <CartesianGrid 
-          strokeDasharray="3 3" 
-          stroke="rgba(0,0,0,0.06)"
-          horizontal={true}
-          vertical={false}
-        />
-        <XAxis
-          dataKey="month"
-          tick={{ 
-            fill: theme.palette.text.primary,
-            fontSize: '0.75rem',
-            fontWeight: 500
-          }}
-          axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-          tickLine={false}
-          dy={8}
-          height={35}
-          padding={{ left: 0, right: 0 }}
-        />
-        <YAxis
-          yAxisId="left"
-          tick={{ 
-            fill: theme.palette.text.primary,
-            fontSize: '0.75rem',
-            fontWeight: 500
-          }}
-          axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-          tickLine={false}
-          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-          width={35}
-          domain={[0, 'auto']}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          verticalAlign="top"
-          height={30}
-          iconType="circle"
-          iconSize={8}
-          wrapperStyle={{
-            paddingTop: '0px',
-            paddingBottom: '0px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '16px'
-          }}
-          formatter={(value) => (
-            <span style={{ 
-              color: theme.palette.text.primary,
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              padding: '0 4px'
-            }}>
-              {value}
-            </span>
-          )}
-        />
-        <Area
-          yAxisId="left"
-          type="monotone"
-          dataKey="totalUsers"
-          name="Total Users"
-          stroke="#6B46C1"
-          strokeWidth={2}
-          fill="url(#totalUsersGradient)"
-          dot={{ 
-            r: 4, 
-            fill: "#6B46C1",
-            strokeWidth: 2,
-            stroke: "#fff"
-          }}
-          activeDot={{ 
-            r: 6,
-            strokeWidth: 2,
-            stroke: "#fff",
-            fill: "#6B46C1"
-          }}
-        />
-        <Area
-          yAxisId="left"
-          type="monotone"
-          dataKey="activeUsers"
-          name="Active Users"
-          stroke="#38B2AC"
-          strokeWidth={2}
-          fill="url(#activeUsersGradient)"
-          dot={{ 
-            r: 4, 
-            fill: "#38B2AC",
-            strokeWidth: 2,
-            stroke: "#fff"
-          }}
-          activeDot={{ 
-            r: 6,
-            strokeWidth: 2,
-            stroke: "#fff",
-            fill: "#38B2AC"
-          }}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
+    <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+      <Line data={chartData} options={options} />
+    </div>
   );
 };
 
